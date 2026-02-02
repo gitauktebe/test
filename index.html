@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Покер</title>
+  <meta name="color-scheme" content="dark light" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root{
+      --bg0:#0b1020; --bg1:#0f1730;
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --shadow: 0 18px 70px rgba(0,0,0,.45);
+      --radius: 18px;
+
+      --good: rgba(34,197,94,.95);
+      --bad: rgba(239,68,68,.95);
+
+      --barBg: rgba(255,255,255,.09);
+      --barFill: rgba(99,102,241,.92);
+
+      --tick: rgba(255,255,255,.20);
+      --tick2: rgba(0,0,0,.18);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(99,102,241,.35), transparent 60%),
+        radial-gradient(900px 500px at 80% 30%, rgba(34,197,94,.22), transparent 60%),
+        radial-gradient(800px 600px at 50% 90%, rgba(236,72,153,.16), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+      padding: 18px 14px 34px;
+      overflow-x:hidden;
+    }
+
+    .wrap{max-width:980px;margin:0 auto}
+    .header{
+      padding:16px 16px 14px;
+      border:1px solid var(--stroke);
+      border-radius: calc(var(--radius) + 8px);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .topRow{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+    h1{margin:0; font-size:22px; letter-spacing:.2px}
+    .sub{margin-top:6px; color:var(--muted); font-size:13px; line-height:1.35}
+
+    /* iOS-style horizontal scroll + soft fade edges (без чёрных плашек) */
+    .modesWrap{
+      margin-top:12px;
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 2px 10px; /* чтобы крайние кнопки не резались */
+      scroll-behavior:smooth;
+
+      /* мягкое “iOS-fade” */
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+    }
+    .modesWrap::-webkit-scrollbar{display:none;}
+
+    .modes{
+      display:flex;
+      gap:10px;
+      flex-wrap:nowrap;
+      width:max-content;
+      padding: 2px 2px;
+      scroll-snap-type: x mandatory;
+    }
+
+    .btn{
+      scroll-snap-align: center;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:10px 14px;
+      border-radius: 999px;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.20);
+      white-space:nowrap;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22);}
+    .btn.active{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.26);
+      transform: translateY(-1px);
+    }
+
+    .list{margin-top:12px; display:flex; flex-direction:column; gap:10px;}
+
+    .item{
+      display:flex; align-items:center; gap:12px;
+      padding: 12px 14px;
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: 0 14px 45px rgba(0,0,0,.26);
+      backdrop-filter: blur(10px);
+      will-change: transform;
+    }
+
+    .left{min-width: 160px; display:flex; align-items:center; gap:10px;}
+    .avatar{
+      width:34px;height:34px;border-radius: 12px;
+      display:grid;place-items:center;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      font-weight:700;
+    }
+    .nameBlock{display:flex;flex-direction:column; gap:2px;}
+    .nameBlock b{font-size:15px}
+    .nameBlock span{font-size:12px;color:var(--muted)}
+
+    .right{
+      margin-left:auto;
+      width:min(520px, 100%);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .iconSlot{
+      width:22px;
+      text-align:center;
+      opacity:.95;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+    }
+
+    .value{
+      min-width: 120px;
+      text-align:right;
+      font-size:14px;
+      letter-spacing:.15px;
+      white-space:nowrap;
+    }
+    .value.good{color: var(--good)}
+    .value.bad{color: var(--bad)}
+
+    .bar{
+      position:relative;
+      height:12px;
+      flex: 1 1 auto;
+      background: var(--barBg);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 999px;
+      overflow:hidden;
+    }
+    .bar.ticked::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          transparent 26px,
+          var(--tick) 26px,
+          var(--tick) 27px
+        );
+      opacity:.7;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+    .bar.ticked::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          transparent 26px,
+          var(--tick2) 26px,
+          var(--tick2) 27px
+        );
+      opacity:.25;
+      pointer-events:none;
+    }
+
+    .fill{
+      position:absolute; inset:0 auto 0 0;
+      width:0%;
+      background: var(--barFill);
+      border-radius: 999px;
+      transition: width .65s cubic-bezier(.2,.8,.2,1);
+    }
+    .fill.good{background: var(--good)}
+    .fill.bad{background: var(--bad)}
+
+    @media (min-width: 760px){
+      h1{font-size:24px}
+      .left{min-width: 220px}
+      .value{min-width: 150px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="topRow">
+        <div>
+          <h1>♠️❤️♣️♦️ Покер</h1>
+          <div class="sub">Статистика</div>
+        </div>
+      </div>
+
+      <div class="modesWrap" id="modesWrap">
+        <div class="modes" id="modes"></div>
+      </div>
+    </div>
+
+    <div class="list" id="list"></div>
+  </div>
+
+<script>
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsHwAvfQEsaYPsASfRJZfI5r9YtbX6Je0B7lEdR6qv_yL39idPRYSHNWEJefOJdQ34FsnaM_EDJaWu/pub?gid=0&single=true&output=csv";
+const CSV_DELIM = ",";
+
+const MODES = [
+  { id:"buyin",   label:"Байин",   type:"money" },
+  { id:"itm",     label:"ITM",     type:"money" },
+  { id:"champion",label:"Чемпион", type:"count", emoji:"🏆" },
+  { id:"loser",   label:"Лузер",   type:"count", emoji:"🍺" },
+  { id:"profit",  label:"Профит",  type:"money_profit" },
+];
+
+const $ = (id)=>document.getElementById(id);
+const listEl = $("list");
+const modesEl = $("modes");
+const modesWrap = $("modesWrap");
+
+let state = { mode: "profit", players: [], justSwitched: false };
+
+function initials(name){
+  const parts = String(name||"").trim().split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] || "•";
+  const b = parts.length > 1 ? parts[1]?.[0] : "";
+  return (a + b).toUpperCase();
+}
+function formatRUB(v){
+  const n = Number(v)||0;
+  return new Intl.NumberFormat("ru-RU", { style:"currency", currency:"RUB", maximumFractionDigits:0 }).format(n);
+}
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function parseCSV(text, delim = ","){
+  const rows = [];
+  let row = [], cur = "", inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    const next = text[i+1];
+    if(ch === '"'){
+      if(inQuotes && next === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+      continue;
+    }
+    if(!inQuotes && ch === delim){ row.push(cur); cur=""; continue; }
+    if(!inQuotes && (ch === "\n" || ch === "\r")){
+      if(ch === "\r" && next === "\n") i++;
+      row.push(cur); rows.push(row);
+      row=[]; cur=""; continue;
+    }
+    cur += ch;
+  }
+  row.push(cur); rows.push(row);
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+function toNumberLoose(x){
+  const s = String(x ?? "").replace(/\s+/g,"").replace(",",".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+}
+function countEmoji(text, emoji){
+  const s = String(text ?? "");
+  if(!s) return 0;
+  const esc = emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (s.match(new RegExp(esc, "g")) || []).length;
+}
+function parseCountCell(value, emoji){
+  const n = toNumberLoose(value);
+  if(n) return n;
+  return countEmoji(value, emoji);
+}
+
+function normalizePlayers(rows){
+  const header = rows[0].map(h=>String(h).trim());
+  const idx = (k)=>header.indexOf(k);
+
+  const iName = idx("name");
+  const iBuy  = idx("buyin_total");
+  const iItm  = idx("itm_total");
+  const iCh   = idx("champion_wins");
+  const iFo   = idx("first_out");
+
+  if(iName === -1) throw new Error("В CSV нет колонки 'name'. Проверь заголовки.");
+
+  const out = [];
+  for(let r=1;r<rows.length;r++){
+    const line = rows[r];
+    const name = String(line[iName] ?? "").trim();
+    if(!name) continue;
+
+    const buy = iBuy >= 0 ? toNumberLoose(line[iBuy]) : 0;
+    const itm = iItm >= 0 ? toNumberLoose(line[iItm]) : 0;
+
+    const chRaw = iCh >= 0 ? line[iCh] : 0;
+    const foRaw = iFo >= 0 ? line[iFo] : 0;
+
+    const ch  = parseCountCell(chRaw, "🏆");
+    const fo  = parseCountCell(foRaw, "🍺");
+
+    out.push({
+      name,
+      buyin_total: buy,
+      itm_total: itm,
+      champion_wins: ch,
+      first_out: fo,
+      profit: itm - buy,
+      _key: name,
+    });
+  }
+  return out;
+}
+
+function modeValue(p, mode){
+  switch(mode){
+    case "buyin": return p.buyin_total;
+    case "itm": return p.itm_total;
+    case "champion": return p.champion_wins;
+    case "loser": return p.first_out;
+    case "profit": return p.profit;
+    default: return 0;
+  }
+}
+
+function valueClassForMode(p, mode){
+  if(mode !== "profit") return "";
+  const n = Number(p.profit)||0;
+  if(n > 0) return "good";
+  if(n < 0) return "bad";
+  return "";
+}
+function fillClassForMode(p, mode){
+  if(mode !== "profit") return "";
+  const n = Number(p.profit)||0;
+  if(n > 0) return "good";
+  if(n < 0) return "bad";
+  return "";
+}
+function currentModeMeta(){
+  return MODES.find(x=>x.id===state.mode) || MODES[0];
+}
+
+function buildButtons(){
+  modesEl.innerHTML = "";
+  for(const m of MODES){
+    const b = document.createElement("button");
+    b.className = "btn" + (m.id === state.mode ? " active" : "");
+    b.textContent = m.label;
+    b.onclick = ()=> setMode(m.id);
+    modesEl.appendChild(b);
+  }
+  requestAnimationFrame(() => {
+    const active = modesEl.querySelector(".btn.active");
+    if(active) active.scrollIntoView({ behavior:"smooth", inline:"center", block:"nearest" });
+  });
+}
+
+/* ---------- Анимация чисел (0 -> target) ---------- */
+const animMap = new WeakMap();
+function cancelAnim(el){
+  const id = animMap.get(el);
+  if(id) cancelAnimationFrame(id);
+  animMap.delete(el);
+}
+function animateNumber(el, from, to, durationMs, formatter){
+  cancelAnim(el);
+  const start = performance.now();
+  const dir = (to >= from) ? 1 : -1;
+  const ease = (t)=> 1 - Math.pow(1 - t, 3); // easeOutCubic
+
+  const step = (now)=>{
+    const t = Math.min(1, (now - start) / durationMs);
+    const k = ease(t);
+    const val = from + (to - from) * k;
+
+    el.textContent = formatter(val);
+
+    if(t < 1){
+      const rid = requestAnimationFrame(step);
+      animMap.set(el, rid);
+    }else{
+      el.textContent = formatter(to);
+      animMap.delete(el);
+    }
+  };
+  const rid = requestAnimationFrame(step);
+  animMap.set(el, rid);
+}
+
+/* Форматтеры под разные режимы */
+function fmtMoney(n){
+  const v = Math.round(Math.max(0, n));
+  return formatRUB(v);
+}
+function fmtProfit(n){
+  const v = Math.round(n);
+  if(v === 0) return formatRUB(0);
+  const sign = v > 0 ? "+" : "−";
+  return sign + formatRUB(Math.abs(v)).replace("−","");
+}
+function fmtCount(n){
+  const v = Math.round(Math.max(0, n));
+  return String(v);
+}
+
+function renderInitial(){
+  listEl.innerHTML = "";
+  for(const p of state.players){
+    const el = document.createElement("div");
+    el.className = "item";
+    el.dataset.key = p._key;
+    el.innerHTML = `
+      <div class="left">
+        <div class="avatar">${escapeHtml(initials(p.name))}</div>
+        <div class="nameBlock">
+          <b>${escapeHtml(p.name)}</b>
+          <span>в игре</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="iconSlot"></div>
+        <div class="value">0</div>
+        <div class="bar"><div class="fill"></div></div>
+      </div>
+    `;
+    listEl.appendChild(el);
+  }
+  updateRightSide(true);
+}
+
+function updateRightSide(skipAnim=false){
+  const mode = state.mode;
+  const meta = currentModeMeta();
+
+  // FLIP: позиции ДО
+  const items = Array.from(listEl.children);
+  const first = new Map();
+  for(const el of items) first.set(el.dataset.key, el.getBoundingClientRect().top);
+
+  // сортировка по убыванию
+  const sorted = [...state.players].sort((a,b)=> modeValue(b, mode) - modeValue(a, mode));
+  state.players = sorted;
+
+  // перестановка DOM
+  const byKeyEl = new Map(items.map(el => [el.dataset.key, el]));
+  for(const p of sorted){
+    const el = byKeyEl.get(p._key);
+    if(el) listEl.appendChild(el);
+  }
+
+  // максимум для шкалы
+  const maxVal = (() => {
+    if(mode === "profit") return Math.max(...sorted.map(p => Math.abs(modeValue(p, mode))), 0);
+    return Math.max(...sorted.map(p => modeValue(p, mode)), 0);
+  })();
+
+  const shouldAnimateFromZero = (!skipAnim && state.justSwitched);
+
+  for(const p of sorted){
+    const el = byKeyEl.get(p._key);
+    if(!el) continue;
+
+    const iconSlot = el.querySelector(".iconSlot");
+    const valEl = el.querySelector(".value");
+    const bar = el.querySelector(".bar");
+    const fill = el.querySelector(".fill");
+
+    const isCountMode = (mode === "champion" || mode === "loser");
+    bar.classList.toggle("ticked", isCountMode);
+    iconSlot.textContent = isCountMode ? (meta.emoji || "") : "";
+
+    const v = modeValue(p, mode);
+
+    // значение (цвет профита)
+    const vClass = valueClassForMode(p, mode);
+    valEl.className = "value" + (vClass ? " " + vClass : "");
+
+    // fill (цвет профита)
+    const fClass = fillClassForMode(p, mode);
+    fill.className = "fill" + (fClass ? " " + fClass : "");
+
+    // ширина шкалы
+    const ratio = maxVal > 0 ? (mode === "profit" ? (Math.abs(v)/maxVal) : (v/maxVal)) : 0;
+    const targetW = Math.max(0, Math.min(100, ratio * 100));
+
+    if(skipAnim){
+      fill.style.transition = "none";
+      fill.style.width = targetW.toFixed(2) + "%";
+      fill.offsetHeight;
+      fill.style.transition = "";
+    }else{
+      if(shouldAnimateFromZero){
+        fill.style.width = "0%";
+        requestAnimationFrame(()=> fill.style.width = targetW.toFixed(2) + "%");
+      }else{
+        fill.style.width = targetW.toFixed(2) + "%";
+      }
+    }
+
+    // анимация чисел
+    if(skipAnim){
+      // сразу
+      if(mode === "buyin" || mode === "itm") valEl.textContent = fmtMoney(v);
+      else if(mode === "profit") valEl.textContent = fmtProfit(v);
+      else valEl.textContent = fmtCount(v);
+    }else{
+      const dur = 520;
+      if(mode === "buyin" || mode === "itm"){
+        animateNumber(valEl, shouldAnimateFromZero ? 0 : toNumberLoose(valEl.textContent), v, dur, fmtMoney);
+      }else if(mode === "profit"){
+        animateNumber(valEl, shouldAnimateFromZero ? 0 : 0, v, dur, fmtProfit);
+      }else{
+        animateNumber(valEl, shouldAnimateFromZero ? 0 : 0, v, dur, fmtCount);
+      }
+    }
+  }
+
+  // FLIP: анимация переезда
+  const last = new Map();
+  for(const el of Array.from(listEl.children)) last.set(el.dataset.key, el.getBoundingClientRect().top);
+
+  for(const el of Array.from(listEl.children)){
+    const key = el.dataset.key;
+    const dy = (first.get(key) ?? 0) - (last.get(key) ?? 0);
+    if(dy){
+      el.style.transition = "none";
+      el.style.transform = `translateY(${dy}px)`;
+      el.offsetHeight;
+      el.style.transition = "transform .55s cubic-bezier(.2,.8,.2,1)";
+      el.style.transform = "";
+    }
+  }
+
+  state.justSwitched = false;
+}
+
+function setMode(mode){
+  if(state.mode === mode) return;
+  state.mode = mode;
+  state.justSwitched = true;
+  buildButtons();
+  updateRightSide(false);
+}
+
+async function load(){
+  const url = SHEET_CSV_URL + (SHEET_CSV_URL.includes("?") ? "&" : "?") + "v=" + Date.now();
+  const res = await fetch(url, { cache: "no-store" });
+  if(!res.ok) throw new Error("Не удалось загрузить CSV (" + res.status + ")");
+  const text = await res.text();
+
+  let rows = parseCSV(text, CSV_DELIM);
+  if(rows.length && rows[0].length <= 1 && text.includes(";")){
+    rows = parseCSV(text, ";");
+  }
+
+  state.players = normalizePlayers(rows);
+  buildButtons();
+  renderInitial();
+}
+
+function applyTelegramOptimizations(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(!tg) return;
+  try{
+    tg.ready();
+    tg.expand();
+    document.body.style.paddingTop = "12px";
+  }catch(e){}
+}
+
+applyTelegramOptimizations();
+load().catch(err=>{
+  listEl.innerHTML = `<div class="item"><div>Ошибка: ${escapeHtml(err?.message || err)}</div></div>`;
+});
+</script>
+</body>
+</html>
