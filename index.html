@@ -42,21 +42,28 @@
     }
 
     .wrap{max-width:980px;margin:0 auto}
+
+    /* Верхняя панель только с кнопками */
     .header{
-      padding:16px 16px 14px;
+      padding: 10px 12px;
       border:1px solid var(--stroke);
       border-radius: calc(var(--radius) + 8px);
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
     }
-    .topRow{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;}
-    h1{margin:0; font-size:22px; letter-spacing:.2px}
-    .sub{margin-top:6px; color:var(--muted); font-size:13px; line-height:1.35}
+
+    /* Закрепляем верхнее меню */
+    .headerSticky{
+      position: sticky;
+      top: calc(env(safe-area-inset-top, 0px) + 10px); /* безопасно для iPhone */
+      z-index: 50;
+      /* чуть плотнее фон при прокрутке (iOS-like) */
+      background: linear-gradient(180deg, rgba(15,23,48,.92), rgba(15,23,48,.55));
+    }
 
     /* iOS-style horizontal scroll + soft fade edges (без чёрных плашек) */
     .modesWrap{
-      margin-top:12px;
       overflow-x:auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
@@ -99,7 +106,14 @@
       transform: translateY(-1px);
     }
 
-    .list{margin-top:12px; display:flex; flex-direction:column; gap:10px;}
+    /* Список уходит под верхнее меню */
+    .list{
+      margin-top:12px;
+      padding-top: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
 
     .item{
       display:flex; align-items:center; gap:12px;
@@ -199,7 +213,6 @@
     .fill.bad{background: var(--bad)}
 
     @media (min-width: 760px){
-      h1{font-size:24px}
       .left{min-width: 220px}
       .value{min-width: 150px}
     }
@@ -207,14 +220,8 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="header">
-      <div class="topRow">
-        <div>
-          <h1>♠️❤️♣️♦️ Покер</h1>
-          <div class="sub">Статистика</div>
-        </div>
-      </div>
-
+    <!-- Только кнопки + закрепление сверху -->
+    <div class="header headerSticky">
       <div class="modesWrap" id="modesWrap">
         <div class="modes" id="modes"></div>
       </div>
@@ -393,7 +400,6 @@ function cancelAnim(el){
 function animateNumber(el, from, to, durationMs, formatter){
   cancelAnim(el);
   const start = performance.now();
-  const dir = (to >= from) ? 1 : -1;
   const ease = (t)=> 1 - Math.pow(1 - t, 3); // easeOutCubic
 
   const step = (now)=>{
@@ -527,7 +533,6 @@ function updateRightSide(skipAnim=false){
 
     // анимация чисел
     if(skipAnim){
-      // сразу
       if(mode === "buyin" || mode === "itm") valEl.textContent = fmtMoney(v);
       else if(mode === "profit") valEl.textContent = fmtProfit(v);
       else valEl.textContent = fmtCount(v);
