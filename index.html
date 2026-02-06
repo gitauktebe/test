@@ -286,9 +286,9 @@ const CSV_DELIM = ",";
 const MODES = [
   { id:"buyin",   label:"Байин",   type:"money" },
   { id:"itm",     label:"ITM",     type:"money" },
+  { id:"profit",  label:"Профит",  type:"money_profit" },
   { id:"champion",label:"Чемпион", type:"count", emoji:"🏆" },
   { id:"loser",   label:"Лузер",   type:"count", emoji:"🍺" },
-  { id:"profit",  label:"Профит",  type:"money_profit" },
 ];
 
 const $ = (id)=>document.getElementById(id);
@@ -498,7 +498,6 @@ function renderInitial(){
         <div class="avatar">${escapeHtml(initials(p.name))}</div>
         <div class="nameBlock">
           <b>${escapeHtml(p.name)}</b>
-          <span>в игре</span>
         </div>
       </div>
       <div class="right">
