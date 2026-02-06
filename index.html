@@ -48,17 +48,13 @@
       width: 100%;
       padding: 10px 12px;
       border-radius: 999px;
-      background:
  main
-      backdrop-filter: blur(12px);
-      position: relative;
-      isolation: isolate;
     }
 
     /* Закрепляем верхнее меню */
     .headerSticky{
       position: sticky;
-      top: calc(env(safe-area-inset-top, 0px) + 10px); /* безопасно для iPhone */
+      top: env(safe-area-inset-top, 0px); /* безопасно для iPhone */
       z-index: 50;
  main
       /* чуть плотнее фон при прокрутке (iOS-like) */
