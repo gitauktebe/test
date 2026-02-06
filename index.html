@@ -684,8 +684,77 @@ if(headerResizeObserver && headerEl){
   headerResizeObserver.observe(headerEl);
 }
 
+function setModeByIndex(nextIndex){
+  if(nextIndex < 0 || nextIndex >= MODES.length) return;
+  const nextMode = MODES[nextIndex]?.id;
+  if(nextMode) setMode(nextMode);
+}
+
+function setupSwipeNavigation(){
+  const swipe = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
+    moved: false,
+    startTime: 0,
+  };
+  const horizontalThreshold = 60;
+  const verticalThreshold = 50;
+  const maxDurationMs = 700;
+
+  const isSwipeTarget = (target) => !target.closest?.(".modesWrap");
+
+  document.addEventListener("touchstart", (event) => {
+    if(event.touches.length !== 1) return;
+    const target = event.target;
+    if(!isSwipeTarget(target)) return;
+    const touch = event.touches[0];
+    swipe.active = true;
+    swipe.moved = false;
+    swipe.startX = touch.clientX;
+    swipe.startY = touch.clientY;
+    swipe.lastX = touch.clientX;
+    swipe.lastY = touch.clientY;
+    swipe.startTime = Date.now();
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (event) => {
+    if(!swipe.active || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    swipe.lastX = touch.clientX;
+    swipe.lastY = touch.clientY;
+    swipe.moved = true;
+  }, { passive: true });
+
+  document.addEventListener("touchend", () => {
+    if(!swipe.active) return;
+    swipe.active = false;
+    if(!swipe.moved) return;
+    const dx = swipe.lastX - swipe.startX;
+    const dy = swipe.lastY - swipe.startY;
+    const dt = Date.now() - swipe.startTime;
+
+    if(Math.abs(dy) > verticalThreshold || Math.abs(dx) < horizontalThreshold || dt > maxDurationMs){
+      return;
+    }
+    if(Math.abs(dx) < Math.abs(dy) * 1.2){
+      return;
+    }
+
+    const currentIndex = MODES.findIndex((m) => m.id === state.mode);
+    if(dx < 0){
+      setModeByIndex(currentIndex + 1);
+    }else{
+      setModeByIndex(currentIndex - 1);
+    }
+  }, { passive: true });
+}
+
 applyTelegramOptimizations();
 updateHeaderHeight();
+setupSwipeNavigation();
 load().catch(err=>{
   listEl.innerHTML = `<div class="item"><div>Ошибка: ${escapeHtml(err?.message || err)}</div></div>`;
 });
