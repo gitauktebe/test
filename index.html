@@ -40,43 +40,52 @@
       padding: 18px 14px 34px;
       overflow-x:hidden;
     }
+    body::before{
+      content:"";
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      height: calc(var(--header-height, 0px) + env(safe-area-inset-top, 0px) + 18px);
+      background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.96));
+      z-index: 40;
+      pointer-events: none;
+    }
 
-    .wrap{max-width:980px;margin:0 auto}
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding-top: calc(var(--header-height, 0px) + 12px);
+    }
 
     /* Верхняя панель только с кнопками */
     .header{
       width: 100%;
       padding: 10px 12px;
       border-radius: 999px;
- main
+      border: none;
+      box-shadow: none;
     }
 
     /* Закрепляем верхнее меню */
     .headerSticky{
-      position: sticky;
-      top: env(safe-area-inset-top, 0px); /* безопасно для iPhone */
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 18px); /* безопасно для iPhone */
+      left: 14px;
+      right: 14px;
       z-index: 50;
- main
       /* чуть плотнее фон при прокрутке (iOS-like) */
-      background: linear-gradient(180deg, rgba(15,23,48,.98), rgba(15,23,48,.92));
+      background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.98));
       backdrop-filter: blur(14px);
+      overflow: hidden;
     }
     .headerSticky::before{
       content:"";
       position:absolute;
       inset:0;
-      background: linear-gradient(180deg, rgba(15,23,48,.98), rgba(15,23,48,.9));
+      background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.96));
       border-radius: inherit;
       z-index: -1;
-    }
-    .headerSticky::after{
-      content:"";
-      position:absolute;
-      left:0; right:0;
-      bottom: calc(var(--header-overlap) * -1);
-      height: var(--header-overlap);
- main
-      pointer-events:none;
     }
 
     /* iOS-style horizontal scroll + soft fade edges (без чёрных плашек) */
@@ -124,12 +133,10 @@
 
     /* Список уходит под верхнее меню */
     .list{
-      margin-top: calc(12px + var(--header-overlap, 0px));
       padding-top: 10px;
       display:flex;
       flex-direction:column;
       gap:10px;
- main
     }
 
     .item{
@@ -263,6 +270,7 @@ const $ = (id)=>document.getElementById(id);
 const listEl = $("list");
 const modesEl = $("modes");
 const modesWrap = $("modesWrap");
+const headerEl = document.querySelector(".headerSticky");
 
 let state = { mode: "profit", players: [], justSwitched: false };
 
@@ -618,7 +626,19 @@ function applyTelegramOptimizations(){
   }catch(e){}
 }
 
+function updateHeaderHeight(){
+  if(!headerEl) return;
+  const rect = headerEl.getBoundingClientRect();
+  document.documentElement.style.setProperty("--header-height", `${rect.height}px`);
+}
+
+const headerResizeObserver = headerEl ? new ResizeObserver(updateHeaderHeight) : null;
+if(headerResizeObserver && headerEl){
+  headerResizeObserver.observe(headerEl);
+}
+
 applyTelegramOptimizations();
+updateHeaderHeight();
 load().catch(err=>{
   listEl.innerHTML = `<div class="item"><div>Ошибка: ${escapeHtml(err?.message || err)}</div></div>`;
 });
