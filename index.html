@@ -74,7 +74,7 @@
       /* чуть плотнее фон при прокрутке (iOS-like) */
       background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.98));
       backdrop-filter: blur(14px);
-      overflow: hidden;
+      overflow: visible;
     }
     .headerSticky::before{
       content:"";
@@ -95,6 +95,8 @@
     }
 
     .headerInner{
+      position: relative;
+      z-index: 1;
       max-width:980px;
       margin:0 auto;
       padding: 10px 14px 8px;
