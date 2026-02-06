@@ -45,6 +45,7 @@
 
     /* Верхняя панель только с кнопками */
     .header{
+      width: 100%;
       padding: 10px 12px;
       border-radius: 999px;
       background:
@@ -125,12 +126,14 @@
       display:flex;
       flex-direction:column;
       gap:10px;
+      -webkit-mask-image: linear-gradient(180deg, transparent 0px, #000 20px);
+      mask-image: linear-gradient(180deg, transparent 0px, #000 20px);
     }
 
     .item{
       display:flex; align-items:center; gap:12px;
       padding: 12px 14px;
-      border:1px solid var(--stroke);
+      border:1px solid rgba(255,255,255,0);
       border-radius: var(--radius);
       background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
       box-shadow: 0 14px 45px rgba(0,0,0,.26);
@@ -231,14 +234,14 @@
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- Только кнопки + закрепление сверху -->
-    <div class="header headerSticky">
-      <div class="modesWrap" id="modesWrap">
-        <div class="modes" id="modes"></div>
-      </div>
+  <!-- Только кнопки + закрепление сверху -->
+  <div class="header headerSticky">
+    <div class="modesWrap" id="modesWrap">
+      <div class="modes" id="modes"></div>
     </div>
+  </div>
 
+  <div class="wrap">
     <div class="list" id="list"></div>
   </div>
 
