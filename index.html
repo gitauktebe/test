@@ -46,7 +46,7 @@
       top:0;
       left:0;
       right:0;
- main
+      height: calc(var(--header-height, 0px) + max(env(safe-area-inset-top, 0px), var(--tg-safe-top, 0px)) + 12px);
       background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.96));
       z-index: 40;
       pointer-events: none;
@@ -55,24 +55,22 @@
     .wrap{
       max-width:980px;
       margin:0 auto;
-      padding-top: calc(var(--header-height, 0px) + 12px);
+      padding-top: calc(var(--header-height, 0px) + max(env(safe-area-inset-top, 0px), var(--tg-safe-top, 0px)) + 12px);
     }
 
     /* Верхняя панель только с кнопками */
     .header{
       width: 100%;
-      padding: 10px 12px;
-      border-radius: 999px;
- main
     }
 
     /* Закрепляем верхнее меню */
     .headerSticky{
       position: fixed;
-      top: calc(env(safe-area-inset-top, 0px) + 18px); /* безопасно для iPhone */
-      left: 14px;
-      right: 14px;
+      top: 0;
+      left: 0;
+      right: 0;
       z-index: 50;
+      padding-top: max(env(safe-area-inset-top, 0px), var(--tg-safe-top, 0px));
       /* чуть плотнее фон при прокрутке (iOS-like) */
       background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.98));
       backdrop-filter: blur(14px);
@@ -83,13 +81,18 @@
       position:absolute;
       inset:0;
       background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.96));
-      border-radius: inherit;
       z-index: -1;
+    }
+
+    .headerInner{
+      max-width:980px;
+      margin:0 auto;
+      padding: 10px 14px 8px;
     }
 
     /* iOS-style horizontal scroll + soft fade edges (без чёрных плашек) */
     .modesWrap{
-      overflow-x:hidden;
+      overflow-x:auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       padding: 4px 12px; /* чтобы крайние кнопки не резались */
@@ -239,13 +242,23 @@
       .left{min-width: 220px}
       .value{min-width: 150px}
     }
+
+    @media (max-width: 520px){
+      body{padding: 14px 10px 30px;}
+      .btn{font-size:12px; padding:9px 12px;}
+      .item{padding: 10px 12px;}
+      .left{min-width: 140px;}
+      .value{min-width: 100px; font-size:13px;}
+    }
   </style>
 </head>
 <body>
   <!-- Только кнопки + закрепление сверху -->
   <div class="header headerSticky">
-    <div class="modesWrap" id="modesWrap">
-      <div class="modes" id="modes"></div>
+    <div class="headerInner">
+      <div class="modesWrap" id="modesWrap">
+        <div class="modes" id="modes"></div>
+      </div>
     </div>
   </div>
 
@@ -621,7 +634,24 @@ function applyTelegramOptimizations(){
   try{
     tg.ready();
     tg.expand();
+    document.documentElement.style.setProperty("--tg-viewport-height", `${tg.viewportHeight || 0}px`);
+    document.documentElement.style.setProperty("--tg-viewport-stable-height", `${tg.viewportStableHeight || 0}px`);
+    if(tg.safeAreaInset){
+      const inset = tg.safeAreaInset;
+      document.documentElement.style.setProperty("--tg-safe-top", `${inset.top || 0}px`);
+      document.documentElement.style.setProperty("--tg-safe-bottom", `${inset.bottom || 0}px`);
+    }
     document.body.style.paddingTop = "12px";
+    tg.onEvent("viewportChanged", () => {
+      document.documentElement.style.setProperty("--tg-viewport-height", `${tg.viewportHeight || 0}px`);
+      document.documentElement.style.setProperty("--tg-viewport-stable-height", `${tg.viewportStableHeight || 0}px`);
+      if(tg.safeAreaInset){
+        const inset = tg.safeAreaInset;
+        document.documentElement.style.setProperty("--tg-safe-top", `${inset.top || 0}px`);
+        document.documentElement.style.setProperty("--tg-safe-bottom", `${inset.bottom || 0}px`);
+      }
+      updateHeaderHeight();
+    });
   }catch(e){}
 }
 
