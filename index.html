@@ -60,7 +60,7 @@
       top: env(safe-area-inset-top, 0px); /* безопасно для iPhone */
       z-index: 50;
       /* чуть плотнее фон при прокрутке (iOS-like) */
-      background: linear-gradient(180deg, rgba(15,23,48,.98), rgba(15,23,48,.92));
+      background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.98));
       backdrop-filter: blur(14px);
       overflow: hidden;
     }
@@ -68,7 +68,7 @@
       content:"";
       position:absolute;
       inset:0;
-      background: linear-gradient(180deg, rgba(15,23,48,.98), rgba(15,23,48,.9));
+      background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.96));
       border-radius: inherit;
       z-index: -1;
     }
