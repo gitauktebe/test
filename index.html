@@ -115,8 +115,8 @@
     .modes{
       display:flex;
       gap:10px;
-      flex-wrap:wrap;
-      width:100%;
+      flex-wrap:nowrap;
+      width:max-content;
       padding: 2px 2px;
       scroll-snap-type: x mandatory;
     }
@@ -134,8 +134,8 @@
       transition: transform .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
       box-shadow: 0 12px 28px rgba(0,0,0,.28);
       text-shadow: 0 1px 4px rgba(0,0,0,.35);
-      flex: 1 1 120px;
-      min-width: 0;
+      flex: 0 0 auto;
+      min-width: 104px;
       text-align:center;
       white-space:nowrap;
     }
@@ -262,6 +262,12 @@
       .item{padding: 10px 12px;}
       .left{min-width: 140px;}
       .value{min-width: 100px; font-size:13px;}
+    }
+
+    @media (min-width: 900px){
+      .headerInner{padding: 12px 18px 10px;}
+      .modesWrap{padding: 6px 18px;}
+      .btn{font-size:14px; padding:10px 18px; min-width: 120px;}
     }
   </style>
 </head>
