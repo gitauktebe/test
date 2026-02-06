@@ -40,6 +40,17 @@
       padding: 18px 14px 34px;
       overflow-x:hidden;
     }
+    body::before{
+      content:"";
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      height: calc(var(--header-height, 0px) + env(safe-area-inset-top, 0px));
+      background: linear-gradient(180deg, rgba(15,23,48,1), rgba(15,23,48,.96));
+      z-index: 40;
+      pointer-events: none;
+    }
 
     .wrap{
       max-width:980px;
