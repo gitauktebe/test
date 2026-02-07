@@ -12,6 +12,7 @@ const MODES = [
 const { parseCSV, normalizePlayers, toNumberLoose } = window.CSVUtils;
 const { initials, escapeHtml, animateNumber, fmtMoney, fmtProfit, fmtCount } = window.UIHelpers;
 const { applyTelegramOptimizations } = window.TelegramUtils;
+const { registerMe } = window.AuthClient || {};
 
 const $ = (id)=>document.getElementById(id);
 const listEl = $("list");
@@ -301,6 +302,9 @@ function setupSwipeNavigation(){
 applyTelegramOptimizations(updateHeaderHeight);
 updateHeaderHeight();
 setupSwipeNavigation();
+if(registerMe){
+  registerMe().catch(console.error);
+}
 load().catch(err=>{
   listEl.innerHTML = `<div class="item"><div>Ошибка: ${escapeHtml(err?.message || err)}</div></div>`;
 });
